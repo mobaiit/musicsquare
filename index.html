@@ -552,7 +552,7 @@
             overflow-y:auto;
             padding:20px;
             text-align:center;
-            font-size:20px;
+            font-size:14px;
             line-height:2.5;
             color:var(--text-sub);
             scroll-behavior:smooth;
@@ -588,7 +588,7 @@
         }
         .lyrics-scroll-full .active{
             color:var(--accent);
-            font-size:26px;
+            font-size:18px;
             font-weight:700;
             text-shadow:0 0 15px rgba(255,205,50,.55);
             transform:scale(1.05);
@@ -1459,17 +1459,29 @@
             $('jumpNext').onclick=()=>{if(state.lyricIndex<state.lyrics.length-1){dom.audio.currentTime=state.lyrics[state.lyricIndex+1].time+.1;}};
             $('lyricsStyleBtn').onclick=()=>{state.lyricsAlt=!state.lyricsAlt;$('lyricsScroll').classList.toggle('alt-style',state.lyricsAlt);toast('歌词样式已切换');};
 
-            // 进度条拖动功能
+            // 进度条拖动功能（鼠标和触摸）
             let progressDragging = false;
             let fullProgressDragging = false;
             
+            // 底部进度条
             dom.progressWrapper.addEventListener('mousedown',e=>{progressDragging=true;const rect=dom.progressWrapper.getBoundingClientRect();const r=(e.clientX-rect.left)/rect.width;const dur=dom.audio.duration||0;dom.audio.currentTime=Math.max(0,Math.min(dur,dur*r));});
-            document.addEventListener('mousemove',e=>{if(progressDragging){const rect=dom.progressWrapper.getBoundingClientRect();const r=Math.max(0,Math.min(1,(e.clientX-rect.left)/rect.width));const dur=dom.audio.duration||0;dom.audio.currentTime=dur*r;}});
-            document.addEventListener('mouseup',()=>{progressDragging=false;});
+            dom.progressWrapper.addEventListener('touchstart',e=>{progressDragging=true;const rect=dom.progressWrapper.getBoundingClientRect();const r=(e.touches[0].clientX-rect.left)/rect.width;const dur=dom.audio.duration||0;dom.audio.currentTime=Math.max(0,Math.min(dur,dur*r));});
             
+            document.addEventListener('mousemove',e=>{if(progressDragging){const rect=dom.progressWrapper.getBoundingClientRect();const r=Math.max(0,Math.min(1,(e.clientX-rect.left)/rect.width));const dur=dom.audio.duration||0;dom.audio.currentTime=dur*r;}});
+            document.addEventListener('touchmove',e=>{if(progressDragging){const rect=dom.progressWrapper.getBoundingClientRect();const r=Math.max(0,Math.min(1,(e.touches[0].clientX-rect.left)/rect.width));const dur=dom.audio.duration||0;dom.audio.currentTime=dur*r;}});
+            
+            document.addEventListener('mouseup',()=>{progressDragging=false;});
+            document.addEventListener('touchend',()=>{progressDragging=false;});
+            
+            // 全屏进度条
             dom.fullProgressWrapper.addEventListener('mousedown',e=>{fullProgressDragging=true;const rect=dom.fullProgressWrapper.getBoundingClientRect();const r=(e.clientX-rect.left)/rect.width;const dur=dom.audio.duration||0;dom.audio.currentTime=Math.max(0,Math.min(dur,dur*r));});
+            dom.fullProgressWrapper.addEventListener('touchstart',e=>{fullProgressDragging=true;const rect=dom.fullProgressWrapper.getBoundingClientRect();const r=(e.touches[0].clientX-rect.left)/rect.width;const dur=dom.audio.duration||0;dom.audio.currentTime=Math.max(0,Math.min(dur,dur*r));});
+            
             document.addEventListener('mousemove',e=>{if(fullProgressDragging){const rect=dom.fullProgressWrapper.getBoundingClientRect();const r=Math.max(0,Math.min(1,(e.clientX-rect.left)/rect.width));const dur=dom.audio.duration||0;dom.audio.currentTime=dur*r;}});
+            document.addEventListener('touchmove',e=>{if(fullProgressDragging){const rect=dom.fullProgressWrapper.getBoundingClientRect();const r=Math.max(0,Math.min(1,(e.touches[0].clientX-rect.left)/rect.width));const dur=dom.audio.duration||0;dom.audio.currentTime=dur*r;}});
+            
             document.addEventListener('mouseup',()=>{fullProgressDragging=false;});
+            document.addEventListener('touchend',()=>{fullProgressDragging=false;});
             dom.audio.addEventListener('timeupdate',()=>{const cur=dom.audio.currentTime||0;const dur=dom.audio.duration||0;const r=dur?cur/dur:0;dom.progressBar.style.transform='scaleX('+r+')';const w=dom.progressWrapper.clientWidth;dom.progressHandle.style.left=(w*r)+'px';if(dom.fullProgressBar){dom.fullProgressBar.style.transform='scaleX('+r+')';const fw=dom.fullProgressWrapper.clientWidth;dom.fullProgressHandle.style.left=(fw*r)+'px';}if($('currentTime'))$('currentTime').textContent=fmt(cur);if($('totalTime'))$('totalTime').textContent=fmt(dur);updateLyrics(cur);});
             dom.audio.addEventListener('ended',()=>nextTrack('next'));dom.audio.addEventListener('play',()=>{state.playing=true;updateUI();if(dom.fullCover)dom.fullCover.classList.remove('paused');});dom.audio.addEventListener('pause',()=>{state.playing=false;updateUI();if(dom.fullCover)dom.fullCover.classList.add('paused');});
 
@@ -1501,35 +1513,40 @@
                 setTimeout(() => $('lyricsView').style.display = 'none', 300);
             }
 
-            // 触摸事件
-            dom.fullPlayerPanel.addEventListener('touchstart', e => {
-                touchStartX = e.touches[0].clientX;
-            });
-            dom.fullPlayerPanel.addEventListener('touchend', e => {
-                const touchEndX = e.changedTouches[0].clientX;
-                const diff = touchStartX - touchEndX;
-                if (diff > 50) { // 左滑超过50px
-                    showLyrics();
-                }
-            });
-
-            // 鼠标事件
-            dom.fullPlayerPanel.addEventListener('mousedown', e => {
-                mouseStartX = e.clientX;
-                isDragging = true;
-            });
-            dom.fullPlayerPanel.addEventListener('mouseup', e => {
-                if (isDragging) {
-                    const diff = mouseStartX - e.clientX;
-                    if (diff > 50) { // 左滑超过50px
+            // 触摸事件（仅限封面区域）
+            const coverArea = document.querySelector('.full-player-cover');
+            if(coverArea) {
+                coverArea.addEventListener('touchstart', e => {
+                    touchStartX = e.touches[0].clientX;
+                });
+                coverArea.addEventListener('touchend', e => {
+                    const touchEndX = e.changedTouches[0].clientX;
+                    const diff = touchStartX - touchEndX;
+                    if (diff > 50 && window.innerWidth < 768) { // 左滑超过50px且仅限手机端
                         showLyrics();
                     }
+                });
+            }
+
+            // 鼠标事件（仅限封面区域）
+            if(coverArea) {
+                coverArea.addEventListener('mousedown', e => {
+                    mouseStartX = e.clientX;
+                    isDragging = true;
+                });
+                coverArea.addEventListener('mouseup', e => {
+                    if (isDragging && window.innerWidth < 768) {
+                        const diff = mouseStartX - e.clientX;
+                        if (diff > 50) { // 左滑超过50px且仅限手机端
+                            showLyrics();
+                        }
+                        isDragging = false;
+                    }
+                });
+                coverArea.addEventListener('mouseleave', () => {
                     isDragging = false;
-                }
-            });
-            dom.fullPlayerPanel.addEventListener('mouseleave', () => {
-                isDragging = false;
-            });
+                });
+            }
 
             // 歌词界面播放按钮
             $('lyricsPlayBtn').addEventListener('click', async(e) => {
