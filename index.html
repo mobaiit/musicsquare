@@ -944,14 +944,14 @@
             display: inline-block !important;
             transition: none !important;
         }
-        
+
         /* 防止图标渲染时闪烁 */
         .player, .searchbar {
             will-change: auto;
             backface-visibility: hidden;
             -webkit-backface-visibility: hidden;
         }
-        
+
         /* 图标容器稳定性 */
         .player .controls button,
         .searchbar .icon {
@@ -974,7 +974,7 @@
     <!-- 版权声明 -->
     <div class="copyright">
         <span>本站仅作为学习演示，音乐版权归各平台与原作者所有。</span>
-        <button class="disclaimer-btn" onclick="$('disclaimerModal').style.display='flex'">免责声明</button>
+        <button class="disclaimer-btn" id="disclaimerOpenBtn">免责声明</button>
     </div>
 
     <!-- 来源选择 -->
@@ -1755,6 +1755,7 @@
             });
             dom.searchInput.addEventListener('focus',()=>{if(state.searchHistory.length)renderSearchHistory();});
             dom.searchInput.addEventListener('blur',()=>{setTimeout(()=>$('searchHistory').classList.remove('show'),200);});
+            $('disclaimerOpenBtn').addEventListener('click',()=>{$('disclaimerModal').style.display='flex';});
             $('disclaimerBtn').addEventListener('click',()=>{
                 const app = $('app');
                 const body = document.body;
@@ -2087,7 +2088,7 @@
             dom.audio.volume=state.volume;
             $('fullMuteBtn').innerHTML=state.muted?'<i data-lucide="volume-x"></i>':'<i data-lucide="volume-2"></i>';
             updateModeUI();
-            
+
             // 初始化图标一次
             if(typeof lucide !== 'undefined'){
                 lucide.createIcons();
@@ -2095,7 +2096,7 @@
 
             loadDefault();
         }
-        
+
         // 优化图标渲染，避免频繁重新创建
         let iconRenderTimeout;
         function renderIconsOptimized() {
@@ -2106,7 +2107,7 @@
                 }
             }, 50);
         }
-        
+
         document.addEventListener('DOMContentLoaded',()=>{
             setup();
             if(typeof lucide !== 'undefined'){
